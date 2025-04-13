@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>System Info Dashboard</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+        th, td {
+            border: 1px solid #ccc;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #f4f4f4;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        #system-info-table {
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>System Information Dashboard</h1>
+        <button id="loadSystemInfo">Load System Info</button>
+        <div id="system-info">
+            <h3>System Info:</h3>
+            <table id="system-info-table">
+                <thead>
+                    <tr>
+                        <th>Key</th>
+                        <th>Value</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- System Info will be populated here -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Include Socket.IO client library -->
+    <script src="https://cdn.socket.io/4.0.1/socket.io.min.js"></script>
+    <script>
+        var socket = io.connect('http://localhost:5000'); // Connect to the Flask server
+
+        // When the 'system_info' event is received from the server
+        socket.on('system_info', function(data) {
+            console.log('Received System Info:', data);
+            displaySystemInfo(data);
+        });
+
+        // Button click handler to request system info
+        document.getElementById('loadSystemInfo').addEventListener('click', function() {
+            socket.emit('get_system_info'); // Request system info from the Flask server
+        });
+
+        // Function to display system info in a table
+        function displaySystemInfo(data) {
+            const tableBody = document.querySelector('#system-info-table tbody');
+            tableBody.innerHTML = ''; // Clear the table before adding new data
+            
+            // Iterate through the received system info and add rows to the table
+            for (let key in data) {
+                if (data.hasOwnProperty(key)) {
+                    let row = `<tr><td>${key}</td><td>${JSON.stringify(data[key], null, 2)}</td></tr>`;
+                    tableBody.innerHTML += row;
+                }
+            }
+        }
+    </script>
+</body>
+</html>
