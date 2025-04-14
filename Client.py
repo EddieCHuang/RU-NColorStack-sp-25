@@ -3,13 +3,50 @@ import os
 import psutil
 import socket
 import uuid
-import GPUtil
+# import GPUtil    Discontinued on python 3.12, using python 3.13.3
+
 from datetime import datetime
 import requests
 import socketio
 import time
 
 sio = socketio.Client()
+
+import pynvml #using pynmvl to help get GPU information
+
+def get_gpu_info():
+    try:
+        pynvml.nvmlInit()
+        device_count = pynvml.nvmlDeviceGetCount()
+        gpu_data = {}
+        for i in range(device_count):
+            handle = pynvml.nvmlDeviceGetHandleByIndex(i)
+            name = pynvml.nvmlDeviceGetName(handle).decode()
+            mem_info = pynvml.nvmlDeviceGetMemoryInfo(handle)
+            util = pynvml.nvmlDeviceGetUtilizationRates(handle)
+            temp = pynvml.nvmlDeviceGetTemperature(handle, pynvml.NVML_TEMPERATURE_GPU)
+
+            gpu_data[f"GPU_{i}"] = {
+                "Name": name,
+                "Load": f"{util.gpu}%",
+                "Free Memory": f"{mem_info.free // (1024 ** 2)}MB",
+                "Used Memory": f"{mem_info.used // (1024 ** 2)}MB",
+                "Total Memory": f"{mem_info.total // (1024 ** 2)}MB",
+                "Temperature": f"{temp} °C"
+            }
+        pynvml.nvmlShutdown()
+        return gpu_data
+    except Exception as e:
+        return {"GPU": f"Error or not available - {e}"}
+    
+def has_gpu():
+    try:
+        pynvml.nvmlInit()
+        count = pynvml.nvmlDeviceGetCount()
+        pynvml.nvmlShutdown()
+        return count > 0
+    except:
+        return False
 
 def get_size(bytes, suffix="B"):
     # Convert bytes to KB, MB, GB, etc.
@@ -102,31 +139,33 @@ def get_battery_info():
             }
     return {"Battery": "No battery info available"}
 
-def get_gpu_info():
-    try:
-        gpus = GPUtil.getGPUs()
-        gpu_data = {}
-        for i, gpu in enumerate(gpus):
-            gpu_data[f"GPU_{i}"] = {
-                "Name": gpu.name,
-                "Load": f"{gpu.load*100:.0f}%",
-                "Free Memory": f"{gpu.memoryFree}MB",
-                "Used Memory": f"{gpu.memoryUsed}MB",
-                "Total Memory": f"{gpu.memoryTotal}MB",
-                "Temperature": f"{gpu.temperature} °C"
-            }
-        return gpu_data
-    except Exception as e:
-        return {"GPU": f"Error or not available - {e}"}
+#below is using the GPUtil library and it's deprecated in python 3.12
+
+# def get_gpu_info():
+#     try:
+#         gpus = GPUtil.getGPUs()
+#         gpu_data = {}
+#         for i, gpu in enumerate(gpus):
+#             gpu_data[f"GPU_{i}"] = {
+#                 "Name": gpu.name,
+#                 "Load": f"{gpu.load*100:.0f}%",
+#                 "Free Memory": f"{gpu.memoryFree}MB",
+#                 "Used Memory": f"{gpu.memoryUsed}MB",
+#                 "Total Memory": f"{gpu.memoryTotal}MB",
+#                 "Temperature": f"{gpu.temperature} °C"
+#             }
+#         return gpu_data
+#     except Exception as e:
+#         return {"GPU": f"Error or not available - {e}"}
     
 
-def has_gpu():
-    gpus = GPUtil.getGPUs()
-    return len(gpus) > 0
+# def has_gpu():
+#     gpus = GPUtil.getGPUs()
+#     return len(gpus) > 0
 
 def main():
     try:
-        sio.connect('http://192.168.1.9:5000')  # Replace with your Raspberry Pi's IP
+        sio.connect('http://127.0.0.1:5001/')  # Replace with your Raspberry Pi's IP, or your server's
         print("[SocketIO] Connected to server.")        
         
         while(True):

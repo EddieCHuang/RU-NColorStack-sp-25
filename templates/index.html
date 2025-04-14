@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>5 Column Table</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.0/socket.io.min.js"></script>
+</head>
+<body>
+<h1>📊 Pi Health Dashboard</h1>
+
+  <table id="myTable">
+    <thead>
+      <tr>
+        <th>CPU Usage</th>
+        <th>Memory Usage</th>
+        <th>Disk Usage</th>
+        <th>GPU Temp</th>
+        <th>Uptime</th>
+      </tr>
+    </thead>
+    <tbody>
+      <!-- This is where rows get dynamically inserted -->
+    </tbody>
+  </table>
+
+  <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+</body>
+</html>
+
